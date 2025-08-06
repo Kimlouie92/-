@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>임직원 매매내역 관리</title>
+    <style>
+        body { font-family: Pretendard, Arial, sans-serif; background:#f6f8fa; }
+        .container { max-width: 540px; margin:40px auto; background: #fff; border-radius:12px; box-shadow:0 2px 12px #e0e0e0; padding:36px 32px; }
+        h2 { color: #2766d8; }
+        .hide { display: none; }
+        table { border-collapse: collapse; width:100%; margin: 18px 0; }
+        th, td { border: 1px solid #c9c9c9; padding: 6px 9px; font-size:0.97em; }
+        th { background: #ecf1fb; }
+        input, select, button { margin:3px; padding:4px 8px; }
+        .logout-btn { float:right; margin-top:-26px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>임직원 매매내역 시스템</h2>
+    <div id="login-box">
+        <form id="login-form" autocomplete="off">
+            <label>이름 또는 master: <input type="text" id="username"></label><br>
+            <label>비밀번호: <input type="password" id="password"></label>
+            <button type="submit">로그인</button>
+        </form>
+        <div id="login-error" style="color:#b00;margin-top:6px;"></div>
+        <div style="margin-top:18px; color:#888; font-size:0.95em;">* 비밀번호를 잊으신 경우 관리자에게 문의하세요.</div>
+    </div>
+
+    <div id="user-box" class="hide">
+        <button class="logout-btn" onclick="logout()">로그아웃</button>
+        <h3 id="welcome"></h3>
+        <form id="trade-form">
+            <input type="date" id="date" required>
+            <input type="text" id="stock" placeholder="종목명" required>
+            <select id="type" required>
+                <option value="">매매구분</option>
+                <option>매수</option>
+                <option>매도</option>
+            </select>
+            <input type="number" id="qty" placeholder="수량" required>
+            <input type="number" id="price" placeholder="단가" required>
+            <button type="submit">추가</button>
+        </form>
+        <table>
+            <thead>
+                <tr>
+                    <th>날짜</th><th>종목명</th><th>매매구분</th><th>수량</th><th>단가</th><th>금액</th>
+                </tr>
+            </thead>
+            <tbody id="user-table"></tbody>
+        </table>
+    </div>
+
+    <div id="master-box" class="hide">
+        <button class="logout-btn" onclick="logout()">로그아웃</button>
+        <h3>전체 임직원 자기매매내역 (관리자)</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>이름</th><th>날짜</th><th>종목명</th><th>매매구분</th><th>수량</th><th>단가</th><th>금액</th>
+                </tr>
+            </thead>
+            <tbody id="master-table"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+// 비밀번호 매핑
+const USERS = {
+    "이재현": "6081", "최광욱": "2618", "박정민": "2208", "전승환": "6409", "성정환": "8735",
+    "황인범": "2649", "이정호": "6796", "류원희": "8113", "황태욱": "6180", "이유민": "4350",
+    "이정준": "8815", "성정모": "8253", "박지원": "9541", "남정빈": "5267", "허수연": "2020",
+    "김소정": "9989", "박선민": "1230", "이헌철": "2528", "김민준": "7534", "이환기": "1018",
+    "반대호": "9086", "김소현": "6458", "장예진": "4996", "신예진": "6328", "권익환": "2031",
+    "김가희": "4130", "윤예은": "4632",
+    "master": "3379"
+};
+let TRADE_DATA = []; // {user, date, stock, type, qty, price}
+
+document.getElementById('login-form').onsubmit = function(e) {
+    e.preventDefault();
+    const user = document.getElementById('username').value.trim();
+    const pw = document.getElementById('password').value.trim();
+    if(USERS[user] === pw) {
+        sessionStorage.setItem("loginUser", user);
+        showPanel(user);
+    } else {
+        document.getElementById('login-error').innerText = "이름 또는 비밀번호가 올바르지 않습니다.";
+    }
+};
+
+function showPanel(user) {
+    document.getElementById('login-box').classList.add('hide');
+    document.getElementById('login-error').innerText = "";
+    if(user === "master") {
+        document.getElementById('master-box').classList.remove('hide');
+        drawMasterTable();
+    } else {
+        document.getElementById('user-box').classList.remove('hide');
+        document.getElementById('welcome').innerText = `${user}님 자기매매내역 입력`;
+        drawUserTable(user);
+    }
+}
+
+function logout() {
+    sessionStorage.removeItem("loginUser");
+    document.getElementById('user-box').classList.add('hide');
+    document.getElementById('master-box').classList.add('hide');
+    document.getElementById('login-box').classList.remove('hide');
+    document.getElementById('login-form').reset();
+}
+
+// 임직원 내역 추가
+document.getElementById('trade-form').onsubmit = function(e) {
+    e.preventDefault();
+    const user = sessionStorage.getItem("loginUser");
+    const date = document.getElementById('date').value;
+    const stock = document.getElementById('stock').value;
+    const type = document.getElementById('type').value;
+    const qty = Number(document.getElementById('qty').value);
+    const price = Number(document.getElementById('price').value);
+    if(user && date && stock && type && qty && price) {
+        TRADE_DATA.push({user, date, stock, type, qty, price});
+        drawUserTable(user);
+    }
+    this.reset();
+};
+
+// 임직원별 자기내역 표시
+function drawUserTable(user) {
+    let rows = "";
+    TRADE_DATA.filter(t => t.user===user).forEach(t => {
+        rows += `<tr>
+            <td>${t.date}</td><td>${t.stock}</td><td>${t.type}</td>
+            <td>${t.qty}</td><td>${t.price}</td><td>${t.qty * t.price}</td>
+        </tr>`;
+    });
+    document.getElementById('user-table').innerHTML = rows;
+    drawMasterTable();
+}
+
+// 관리자용 전체내역 표시
+function drawMasterTable() {
+    let rows = "";
+    TRADE_DATA.forEach(t => {
+        rows += `<tr>
+            <td>${t.user}</td><td>${t.date}</td><td>${t.stock}</td><td>${t.type}</td>
+            <td>${t.qty}</td><td>${t.price}</td><td>${t.qty * t.price}</td>
+        </tr>`;
+    });
+    document.getElementById('master-table').innerHTML = rows;
+}
+
+// 자동 로그인 처리
+const loginUser = sessionStorage.getItem("loginUser");
+if(loginUser && USERS[loginUser]) showPanel(loginUser);
+
+</script>
+</body>
+</html>
