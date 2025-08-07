@@ -1,29 +1,40 @@
 <!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"><title>관리자 보기</title></head>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>임직원 매매내역 조회</title>
+  <style>
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+  </style>
+</head>
 <body>
-  <h2>입력 내역 확인</h2>
-  <table border="1" cellspacing="0" cellpadding="5">
-    <thead><tr><th>시간</th><th>이름</th><th>내용</th></tr></thead>
-    <tbody id="data-row"></tbody>
+  <h2>임직원 매매내역 전체 보기</h2>
+  <table id="dataTable">
+    <thead>
+      <tr>
+        <th>시간</th>
+        <th>이름</th>
+        <th>내용</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
   </table>
 
   <script>
     fetch("https://script.google.com/macros/s/AKfycbysKLS9t0F_benCMKx93G50HIPvPlm6228MURRcIPTbHqPTfonVJQCd4x-7SS5gsaMl/exec")
-      .then(res => res.json())
+      .then(response => response.json())
       .then(data => {
-        const tbody = document.getElementById("data-row");
+        const tbody = document.querySelector("#dataTable tbody");
         data.forEach(row => {
           const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td>${new Date(row.time).toLocaleString()}</td>
-            <td>${row.name}</td>
-            <td>${row.content}</td>
-          `;
+          tr.innerHTML = `<td>${row.time}</td><td>${row.name}</td><td>${row.content}</td>`;
           tbody.appendChild(tr);
         });
       })
-      .catch(err => console.error("데이터 로딩 오류:", err));
+      .catch(error => {
+        console.error("데이터 불러오기 실패:", error);
+      });
   </script>
 </body>
 </html>
