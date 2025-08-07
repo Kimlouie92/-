@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>관리자 보기</title></head>
+<body>
+  <h2>입력 내역 확인</h2>
+  <table border="1" cellspacing="0" cellpadding="5">
+    <thead><tr><th>시간</th><th>이름</th><th>내용</th></tr></thead>
+    <tbody id="data-row"></tbody>
+  </table>
+
+  <script>
+    fetch("https://script.google.com/macros/s/AKfycbysKLS9t0F_benCMKx93G50HIPvPlm6228MURRcIPTbHqPTfonVJQCd4x-7SS5gsaMl/exec")
+      .then(res => res.json())
+      .then(data => {
+        const tbody = document.getElementById("data-row");
+        data.forEach(row => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${new Date(row.time).toLocaleString()}</td>
+            <td>${row.name}</td>
+            <td>${row.content}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      })
+      .catch(err => console.error("데이터 로딩 오류:", err));
+  </script>
+</body>
+</html>
